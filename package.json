@@ -1,0 +1,42 @@
+{
+  "name": "codex-semantic-status",
+  "version": "1.1.0",
+  "description": "Asynchronously label Codex conversation titles by semantic task status with usage limits.",
+  "scripts": {
+    "test": "python3 -m unittest discover -s tests -v",
+    "doctor": "python3 scripts/semantic_status.py doctor",
+    "install:codex": "python3 scripts/semantic_status.py install"
+  },
+  "files": [
+    ".codex-plugin/",
+    ".claude-plugin/",
+    ".claude-plugin.json",
+    "skills/",
+    "hooks/",
+    "scripts/",
+    "docs/",
+    "tests/",
+    "README.md",
+    "LICENSE",
+    ".agents/",
+    "README.zh-CN.md",
+    "CHANGELOG.md"
+  ],
+  "keywords": [
+    "codex",
+    "codex-plugin",
+    "semantic-status",
+    "async-hook"
+  ],
+  "author": "shiiiiiiji",
+  "license": "MIT",
+  "private": true,
+  "homepage": "https://github.com/shiiiiiiji/codex-semantic-status#readme",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/shiiiiiiji/codex-semantic-status.git"
+  },
+  "bugs": {
+    "url": "https://github.com/shiiiiiiji/codex-semantic-status/issues"
+  }
+}

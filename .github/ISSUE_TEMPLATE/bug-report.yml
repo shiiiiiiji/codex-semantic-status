@@ -1,0 +1,24 @@
+name: Bug report
+description: Report an unexpected title or a background processing problem.
+body:
+  - type: textarea
+    attributes:
+      label: Expected and observed behavior
+      description: Describe the semantic state you expected. Use synthetic examples; do not paste private conversations or credentials.
+    validations:
+      required: true
+  - type: input
+    attributes:
+      label: Environment
+      placeholder: macOS / Linux, Python version, Codex version, plugin version
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Reproduction steps
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Relevant outcome codes
+      description: Optional. Redact thread IDs and titles before sharing status or logs output.

@@ -1,0 +1,9 @@
+{
+  "name": "codex-semantic-status",
+  "description": "Asynchronously label Codex conversation titles by semantic task status with usage limits.",
+  "version": "1.1.0",
+  "author": {
+    "name": "shiiiiiiji"
+  },
+  "license": "MIT"
+}

@@ -1,0 +1,14 @@
+{
+  "name": "codex-semantic-status",
+  "version": "1.1.0",
+  "description": "Asynchronous semantic status emoji for Codex conversations.",
+  "skills": "./skills/",
+  "hooks": "./hooks/hooks.json",
+  "interface": {
+    "displayName": "Semantic Status",
+    "shortDescription": "Async semantic conversation status",
+    "longDescription": "Asynchronously label Codex conversation titles by task meaning, with cached summaries and durable usage budgets.",
+    "developerName": "shiiiiiiji",
+    "category": "Productivity"
+  }
+}

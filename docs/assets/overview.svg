@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="480" viewBox="0 0 1200 480" role="img" aria-labelledby="title desc">
+<title id="title">Codex Semantic Status</title><desc id="desc">A background worker labels conversations by task progress: decision, verification, and completion.</desc>
+<rect width="1200" height="480" rx="24" fill="#101722"/>
+<g font-family="system-ui,-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif">
+<text x="62" y="66" font-size="15" fill="#8c9aad" letter-spacing="3">A SMALL SIGNAL FOR YOUR NEXT STEP</text>
+<text x="60" y="145" font-size="56" font-weight="650" fill="#f1f5fa">Semantic Status</text>
+<text x="64" y="190" font-size="23" fill="#bac5d3">Task progress, quietly reflected in your Codex titles.</text>
+<g transform="translate(62 236)">
+<rect width="514" height="180" rx="16" fill="#192230" stroke="#324154"/>
+<circle cx="27" cy="31" r="6" fill="#62748c"/><text x="48" y="37" font-size="14" fill="#9eacbf">CONVERSATIONS</text>
+<text x="24" y="83" font-size="24">❓</text><text x="64" y="82" font-size="20" fill="#e7edf5">Choose the interaction design</text>
+<text x="24" y="121" font-size="24">🧪</text><text x="64" y="120" font-size="20" fill="#e7edf5">Validate the login fix</text>
+<text x="24" y="159" font-size="24">✅</text><text x="64" y="158" font-size="20" fill="#e7edf5">Explain async / await</text>
+</g>
+<g transform="translate(640 247)">
+<text x="0" y="24" font-size="15" fill="#91a6c0" letter-spacing="2">RUNS IN THE BACKGROUND</text>
+<path d="M12 54V138" stroke="#41556e" stroke-width="2"/>
+<circle cx="12" cy="54" r="5" fill="#85baff"/><text x="36" y="61" font-size="20" fill="#dbe5f1">Read the goal and evidence</text>
+<circle cx="12" cy="97" r="5" fill="#85baff"/><text x="36" y="104" font-size="20" fill="#dbe5f1">Respect the usage budget</text>
+<circle cx="12" cy="138" r="5" fill="#7edcb5"/><text x="36" y="145" font-size="20" fill="#dbe5f1">Update one title prefix</text>
+</g></g></svg>
