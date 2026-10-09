@@ -1,6 +1,6 @@
 {
   "name": "codex-semantic-status",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Asynchronous semantic status emoji for Codex conversations.",
   "skills": "./skills/",
   "hooks": "./hooks/hooks.json",

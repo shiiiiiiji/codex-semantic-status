@@ -1,6 +1,8 @@
 # Security and privacy
 
-The plugin reads local Codex conversation records through app-server and sends a bounded text selection to the user's configured Codex model provider. It reuses the existing Codex authentication; it does not implement another login flow or upload transcripts to the repository owner.
+The plugin reads local Codex conversation records through app-server and sends a bounded text selection to the selected Codex or OpenAI-compatible API provider. Codex login is the default. Selecting a custom endpoint authorizes future background classification to send the bounded content there; choose the endpoint according to your data requirements. The plugin does not upload transcripts to the repository owner.
+
+Custom API credentials are referenced by environment-variable name or a local owner-only file. Hidden input saves a mode-600 file outside Git; configuration and diagnostics do not contain the key value. Direct HTTP inference has a bounded response and a parent-enforced deadline, with no automatic retries or redirects. Endpoint error bodies are never echoed. Responses requests set `store=false`; the endpoint's retention and privacy policies still apply.
 
 Local runtime storage contains thread IDs, last managed titles, short status summaries, budget records and result codes. It lives outside this repository in the Codex data directory. Diagnostic events contain error types rather than raw exception messages. Common credential patterns are redacted before classification; this is a best-effort filter, not a guarantee that all sensitive information is removed.
 

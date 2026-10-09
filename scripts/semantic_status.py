@@ -2,15 +2,15 @@
 """Management commands. Hook execution itself is silent and always non-blocking."""
 import argparse
 import json
-import os
 import pathlib
-import tempfile
 import sys
 import time
 from codex_rpc import CodexRPC
-from status_core import DEFAULTS, context_payload, data_dir, load_config, managed_title, validate_config, validate_decision
+from status_core import DEFAULTS, context_payload, data_dir, load_config, managed_title, validate_decision
 from status_store import Store
-from status_worker import enqueue_hook, file_lock, process_job, run_worker
+from status_worker import enqueue_hook, file_lock, run_worker
+from provider_cli import add_parser as add_provider_parser, manage as manage_provider, save_config
+from provider_config import credential_ready, effective_budget
 
 
 def output(obj):
@@ -27,6 +27,7 @@ def main():
     logs = sub.add_parser("logs")
     logs.add_argument("--limit", type=int, default=20)
     sub.add_parser("doctor")
+    add_provider_parser(sub)
     c = sub.add_parser("configure")
     c.add_argument("--set", action="append", default=[], metavar="KEY=JSON")
     for n in ["pause", "resume", "enqueue", "preview"]:
@@ -57,22 +58,15 @@ def main():
             raise ValueError("event limit must be 1..200")
         output(Store(directory).events(args.limit) if (directory / "state.sqlite3").exists() else [])
     elif args.command == "configure":
-        directory.mkdir(parents=True, exist_ok=True, mode=0o700)
         for entry in args.set:
             key, value = entry.split("=", 1)
             if key not in DEFAULTS:
                 raise ValueError("unknown configuration key: " + key)
             cfg[key] = json.loads(value)
-        validate_config(cfg)
-        path = directory / "config.json"
-        with tempfile.NamedTemporaryFile(mode="w", dir=directory, prefix="config-", suffix=".tmp", delete=False) as handle:
-            handle.write(json.dumps(cfg, ensure_ascii=False, indent=2) + "\n")
-            temp = pathlib.Path(handle.name)
-        try:
-            os.replace(temp, path)
-        finally:
-            temp.unlink(missing_ok=True)
+        save_config(directory, cfg)
         output(cfg)
+    elif args.command == "provider":
+        output(manage_provider(args, directory, cfg))
     elif args.command in ["pause", "resume"]:
         Store(directory).pause(args.thread_id, args.command == "pause")
         output({"thread_id": args.thread_id, "paused": args.command == "pause"})
@@ -80,11 +74,23 @@ def main():
         output({"queued": enqueue_hook({"hook_event_name": "Stop", "session_id": args.thread_id,
             "turn_id": "manual-" + str(time.time_ns())}, directory)})
     elif args.command == "doctor":
-        with CodexRPC(cfg["codex_command"]) as rpc:
-            model = rpc.select_model(cfg["model"])
-            output({"python": sys.version.split()[0], "model": model, "data_dir": str(directory),
-                    "background_concurrency": 1, "calls_model": False,
-                    "budget_is_admission_control": True})
+        report = {"python": sys.version.split()[0], "model": cfg["model"], "data_dir": str(directory),
+                  "backend": cfg["backend"], "model_provider": cfg["model_provider"],
+                  "background_concurrency": 1, "calls_model": False, "budget_is_admission_control": True,
+                  "effective_token_reservation": effective_budget(cfg)["token_reservation"]}
+        if cfg["backend"] == "api":
+            definition = cfg["model_providers"][cfg["model_provider"]]
+            report.update(base_url=definition["base_url"], protocol=definition.get("wire_api", "chat"),
+                          credential_ready=credential_ready(definition), connectivity_checked=False,
+                          source_reader_requires_codex=True)
+        else:
+            with CodexRPC(cfg["codex_command"]) as rpc:
+                if cfg["model_provider"]:
+                    definition = cfg["model_providers"].get(cfg["model_provider"], {})
+                    report.update(credential_ready=credential_ready(definition), provider_model_verified=False)
+                else:
+                    report["model"] = rpc.select_model(cfg["model"])
+        output(report)
     elif args.command == "preview":
         with file_lock(directory, "worker.lock", blocking=False) as lock:
             if lock is None:
@@ -92,7 +98,8 @@ def main():
             store = Store(directory)
             with CodexRPC(cfg["codex_command"]) as rpc:
                 snapshot = rpc.snapshot(args.thread_id)
-                rid = store.reserve(args.thread_id, cfg)
+                budget = effective_budget(cfg)
+                rid = store.reserve(args.thread_id, budget)
                 if rid is None:
                     raise RuntimeError("daily budget exhausted")
                 payload = context_payload(snapshot["goal"], snapshot["messages"],
@@ -102,7 +109,7 @@ def main():
                 except Exception as error:
                     observed = getattr(error, "usage", None)
                     if isinstance(observed, int) and observed >= 0:
-                        store.settle(rid, max(cfg["token_reservation"], observed))
+                        store.settle(rid, max(budget["token_reservation"], observed))
                     raise
                 store.settle(rid, usage)
                 d = validate_decision(raw, cfg, not json.loads(payload)["incomplete_user_context"])

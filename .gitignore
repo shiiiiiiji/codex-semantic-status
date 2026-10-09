@@ -6,6 +6,9 @@ yarn.lock
 *.tgz
 .env
 .env.local
+*.key
+*.pem
+keys/
 scripts/config.json
 dist/
 build/

@@ -43,11 +43,16 @@ for line in sys.stdin:
             self.assertLess(time.monotonic() - start, 1.5)
             sys.path.insert(0, str(ROOT / "scripts"))
             from status_store import Store
+            from status_worker import file_lock
             end = time.monotonic() + 5
             while time.monotonic() < end:
                 report = Store(d).report()
                 if (d / "reading").exists() and report["pending"] == 0:
-                    break
+                    # A consumed job can precede the final worker SQLite read.
+                    with file_lock(d, "worker.lock", blocking=False) as lock:
+                        if lock is not None:
+                            with file_lock(d, "lifecycle.lock"):
+                                break
                 time.sleep(.05)
             self.assertTrue((d / "reading").exists())
             self.assertEqual(report["pending"], 0)

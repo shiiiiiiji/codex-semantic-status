@@ -61,10 +61,14 @@ class ManagementTests(unittest.TestCase):
             import time
             until = time.monotonic() + 3
             store = Store(directory)
+            from status_worker import file_lock
             while time.monotonic() < until:
                 report = store.report()
                 if report["pending"] == 0:
-                    break
+                    with file_lock(directory, "worker.lock", blocking=False) as lock:
+                        if lock is not None:
+                            with file_lock(directory, "lifecycle.lock"):
+                                break
                 time.sleep(.02)
             self.assertEqual(report["usage"], [])
             self.assertEqual(report["threads"][0]["last_result"], "budget")

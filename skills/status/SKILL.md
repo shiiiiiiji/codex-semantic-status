@@ -13,7 +13,13 @@ Commands:
 
 - `status`: show effective configuration, daily inference/Token usage, paused threads and pending jobs.
 - `logs --limit 20`: show recent outcomes and error types without raw exception text.
-- `doctor`: read the available lightweight model and detect runtime availability; no model inference.
+- `doctor`: check inherited Codex model/runtime, or API configuration and credential readiness; no model inference or API connectivity test.
+- `provider setup`: interactive terminal wizard for custom OpenAI-compatible provider/model and hidden credential input. Run in the user's terminal; never ask for the key in chat.
+- `provider add NAME --base-url URL --protocol chat|responses --model MODEL --env-key ENV_NAME`: register an API provider; use `--save-key` in a terminal or `--key-file ABSOLUTE_PATH` for file credentials.
+- `provider use NAME [--model MODEL] [--backend api|codex]`: select a definition, or an existing Codex provider with explicit model.
+- `provider list`: inspect definitions and local credential readiness without printing keys.
+- `provider reset`: restore inherited Codex provider and auto model; preserve ledger and pauses.
+- `provider remove NAME`: remove an inactive definition; retain credential files.
 - `configure --set 'max_tokens_per_day=50000'`: change one or more JSON-valued settings.
 - `configure --set 'enabled=false'`: disable automatic inference; retains existing titles and ledger.
 - `pause THREAD_ID`: preserve the specified title and stop its automatic updates.
@@ -24,6 +30,9 @@ Commands:
 
 Use the user's requested scope; never batch-enroll old chats, reset usage records, or trust hooks silently.
 Settings are stored separately from Codex configuration in the plugin's data directory.
+Provider selection affects only background classification. Never configure an unspecified third-party endpoint,
+send conversation content during setup, or print keys. Direct API uses an 8,000-Token reservation and a
+512-Token output cap by default; Codex keeps its 20,000-Token reservation. Both share daily totals.
 Hook trust is handled by the Codex UI. Only claim that automatic operation is enabled after trust is verified.
 
 Explain that the shared Codex account/provider bears inference costs. Runtime framework and global

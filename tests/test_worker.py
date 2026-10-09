@@ -85,6 +85,23 @@ class WorkerTests(unittest.TestCase):
         self.assertEqual(self.rpc.inferences, 0)
         self.assertEqual(self.rpc.name, "修复登录")
 
+    def test_api_uses_its_own_reservation_and_retains_failure_usage(self):
+        self.cfg.update(backend="api", max_tokens_per_day=9000)
+        def fail():
+            error = RuntimeError("provider failure")
+            error.usage = 10000
+            raise error
+        self.rpc.after_classification = fail
+        self.assertEqual(self.run_job(), "classification_failed")
+        self.assertEqual(self.rpc.inferences, 1)
+        self.assertEqual(self.store.report()["usage"][0]["tokens"], 10000)
+
+    def test_api_timeout_retains_api_reservation(self):
+        self.cfg.update(backend="api", max_tokens_per_day=9000)
+        self.rpc.after_classification = lambda: (_ for _ in ()).throw(TimeoutError())
+        self.assertEqual(self.run_job(), "classification_failed")
+        self.assertEqual(self.store.report()["usage"][0]["tokens"], 8000)
+
     def test_manual_rename_after_a_previous_update_pauses_the_thread(self):
         self.run_job()
         self.rpc.name = "🚩 人工重点"

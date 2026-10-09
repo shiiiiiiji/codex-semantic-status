@@ -29,7 +29,7 @@ python3 scripts/semantic_status.py install
 
 Stop Hook 设置为 `async: true`，只向本地队列投递事件。独立后台进程合并重复事件、读取会话、调用轻量模型，再写回标题。
 
-主会话不等待分类，也不会收到后台生成的消息或附加上下文。后台不会恢复或中断原会话。模型在不持久化的临时会话中分类，工具、插件和外部集成关闭。
+主会话不等待分类，也不会收到后台生成的消息或附加上下文。后台不会恢复或中断原会话。默认在不持久化的 Codex 临时会话中分类，工具、插件和外部集成关闭；自定义 API 可直接完成分类。
 
 | 标识 | 任务状态 |
 | --- | --- |
@@ -46,9 +46,36 @@ Stop Hook 设置为 `async: true`，只向本地队列投递事件。独立后�
 
 ## 成本控制
 
+### 配置自定义 provider 和模型
+
+在终端运行交互式向导：
+
+```sh
+python3 scripts/semantic_status.py provider setup
+```
+
+依次输入 provider 名称、API base URL、模型名、协议（chat 或 responses）和认证方式。选择 file 时，向导隐藏密钥输入，把密钥保存到插件数据目录的独立文件中，权限为 600；配置文件只保存引用。也可以选择环境变量、已有密钥文件或无需认证。向导保存并选中 provider，本身不调用模型。
+
+也可以通过命令配置。先把示例中的地址和模型名替换为实际值：
+
+```sh
+python3 scripts/semantic_status.py provider add gateway \
+  --base-url https://your-provider.example/v1 --protocol chat \
+  --model your-small-model --save-key
+python3 scripts/semantic_status.py provider use gateway
+python3 scripts/semantic_status.py provider list
+python3 scripts/semantic_status.py doctor
+```
+
+base URL 是 API 根地址，按服务要求保留 `/v1`，不要加 `/chat/completions` 或 `/responses`。`--save-key` 需要交互式终端；可改用 `--env-key 环境变量名` 或 `--key-file /绝对路径`。从 Dock 启动的 Codex 未必能读取终端导出的变量，桌面 Hook 推荐使用密钥文件。
+
+自定义 API 直接发送受长度限制的分类提示和会话片段，省去 Codex 框架输入开销。默认每次预留 8,000 Token，输出上限为 512 Token；每日账本与 Codex 模式共用。`provider reset` 切回复用 Codex 登录；预算、已有用量、标题和暂停记录保留。详见 [完整配置说明](docs/providers.md)。
+
+### 默认预算
+
 默认合并 60 秒内的事件，每个会话两次推理至少间隔 300 秒；每日最多尝试 20 次，每个会话最多 6 次。全局每日 Token 准入预算为 50,000，每次预留 20,000，按 Asia/Shanghai 的日期结算。
 
-框架和全局 AGENTS.md 也会消耗 Token。在一个已验证的桌面运行时中，三个简单模拟场景每次约消耗 11,600 个总 Token。默认预算在类似用量下通常每天准入约 2–3 次判断；这个样本不代表所有会话的费用或准确率。
+Codex 模式下，框架和全局 AGENTS.md 也会消耗 Token。在一个已验证的桌面运行时中，三个简单模拟场景每次约消耗 11,600 个总 Token。默认预算在类似用量下通常每天准入约 2–3 次判断；这个样本不代表所有会话的费用或准确率。
 
 预算限制新请求的准入，不是精确金额上限。单笔在途请求可能超出预留或日预算。已知用量在失败后仍计入；未知用量保留预留额度。模型费用使用当前 Codex 账号或模型服务。
 

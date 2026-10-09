@@ -58,7 +58,7 @@ class CodexRPC:
             text=True, bufsize=1, env=env, start_new_session=True)
         threading.Thread(target=self._read, daemon=True).start()
         try:
-            self.request("initialize", {"clientInfo": {"name": "codex-semantic-status", "version": "1.1.0"},
+            self.request("initialize", {"clientInfo": {"name": "codex-semantic-status", "version": "1.2.0"},
                                         "capabilities": {"experimentalApi": True}}, timeout=12)
             self.send({"method": "initialized", "params": {}})
         except Exception:
@@ -206,7 +206,11 @@ class CodexRPC:
         return self.request("thread/name/set", {"threadId": tid, "name": name})
 
     def classify(self, payload, config):
-        model = self.select_model(config["model"])
+        if config.get("backend", "codex") == "api":
+            from api_provider import classify
+            return classify(payload, config)
+        selected_provider = config.get("model_provider", "")
+        model = config["model"] if selected_provider else self.select_model(config["model"])
         # Inherit provider/auth settings, but do not load global skills, hooks, or integrations.
         cfg_path = pathlib.Path(os.environ.get("CODEX_HOME", str(pathlib.Path.home() / ".codex"))) / "config.toml"
         inherited = tomllib.loads(cfg_path.read_text()) if cfg_path.exists() else {}
@@ -219,16 +223,29 @@ class CodexRPC:
                                  "skip_host_skill_discovery": True, "unbounded_connection_retries": False},
                     "mcp_servers": {k: {"enabled": False} for k in inherited.get("mcp_servers", {})},
                     "plugins": {k: {"enabled": False} for k in inherited.get("plugins", {})}}
-        provider = inherited.get("model_provider", "openai")
-        isolated["model_providers"] = {provider: {"request_max_retries": 0, "stream_max_retries": 0}}
-        start = self.request("thread/start", {"model": model, "allowProviderModelFallback": False,
+        provider = selected_provider or inherited.get("model_provider", "openai")
+        definition = config.get("model_providers", {}).get(selected_provider, {}) if selected_provider else {}
+        native = {k: v for k, v in definition.items()
+                  if k in ["name", "base_url", "wire_api", "env_key", "requires_openai_auth"]}
+        if definition:
+            native.setdefault("name", provider)
+            native.setdefault("wire_api", "responses")
+            native.setdefault("requires_openai_auth", False)
+        native.update({"request_max_retries": 0, "stream_max_retries": 0})
+        isolated["model_providers"] = {provider: native}
+        params = {"model": model, "allowProviderModelFallback": False,
             "ephemeral": True, "baseInstructions": PROMPT, "developerInstructions": "",
             "approvalPolicy": "never", "sandbox": "read-only", "selectedCapabilityRoots": [],
             "environments": [], "dynamicTools": [], "cwd": str(pathlib.Path(__file__).resolve().parent),
-            "config": isolated, "serviceName": "semantic-status-classifier"})
+            "config": isolated, "serviceName": "semantic-status-classifier"}
+        if selected_provider:
+            params["modelProvider"] = selected_provider
+        start = self.request("thread/start", params)
         tid = start["thread"]["id"]
         if start.get("model") != model:
             raise RpcError("Requested lightweight model was changed; refusing fallback")
+        if selected_provider and start.get("modelProvider") != selected_provider:
+            raise RpcError("Requested provider was changed; refusing fallback")
         self.notifications.clear()
         end = time.monotonic() + config["classification_timeout_seconds"]
         turn = self.request("turn/start", {"threadId": tid,

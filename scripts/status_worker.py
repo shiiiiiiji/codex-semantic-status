@@ -10,6 +10,7 @@ import time
 from codex_rpc import CodexRPC
 from status_core import context_payload, load_config, managed_title, validate_decision
 from status_store import Store
+from provider_config import effective_budget
 
 
 @contextlib.contextmanager
@@ -29,6 +30,7 @@ def file_lock(directory, name, blocking=True):
 
 
 def process_job(store, rpc, job, config, now=None):
+    budget = effective_budget(config)
     now = time.time() if now is None else now
     tid, revision = job["thread_id"], job["revision"]
     if not config["enabled"]:
@@ -53,7 +55,7 @@ def process_job(store, rpc, job, config, now=None):
     if snap["fingerprint"] == state["fingerprint"]:
         store.discard(tid, revision, "unchanged")
         return "unchanged"
-    rid = store.reserve(tid, config, now)
+    rid = store.reserve(tid, budget, now)
     if rid is None:
         store.discard(tid, revision, "budget")
         return "budget"
@@ -64,7 +66,7 @@ def process_job(store, rpc, job, config, now=None):
     except Exception as error:
         observed = getattr(error, "usage", None)
         if isinstance(observed, int) and observed >= 0:
-            store.settle(rid, max(config["token_reservation"], observed))
+            store.settle(rid, max(budget["token_reservation"], observed))
         store.discard(tid, revision, "classification_failed", type(error).__name__)
         return "classification_failed"
     decision = validate_decision(raw, config, not json.loads(payload)["incomplete_user_context"])
@@ -127,7 +129,7 @@ def run_worker(directory):
                 if not cfg["enabled"]:
                     store.discard(job["thread_id"], job["revision"], "disabled")
                     continue
-                if not store.budget_available(job["thread_id"], cfg):
+                if not store.budget_available(job["thread_id"], effective_budget(cfg)):
                     store.discard(job["thread_id"], job["revision"], "budget")
                     continue
                 try:

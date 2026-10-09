@@ -4,18 +4,25 @@ Commands below run from the repository root. They also work from an installed co
 
 ## Settings
 
+For an interactive wizard or provider commands, see [custom providers and models](providers.md).
+
 Use `configure --set KEY=JSON` with one or more entries. Values are validated before an atomic file replacement.
 
 | Key | Default | Purpose |
 | --- | --- | --- |
 | enabled | true | Admit automatic background work |
-| model | "auto" | Advertised model name, or luna/nano/mini auto selection |
+| backend | "codex" | `codex` ephemeral inference or direct `api` inference |
+| model | "auto" | Auto lightweight selection on inherited Codex provider; exact model for custom providers |
+| model_provider | "" | Empty inherits Codex; otherwise named provider |
+| model_providers | {} | Named definitions managed by provider commands |
 | debounce_seconds | 60 | Coalesce recent events |
 | min_interval_seconds | 300 | Minimum interval between a thread's paid attempts |
 | max_calls_per_day | 20 | Daily global attempt cap |
 | max_calls_per_thread_per_day | 6 | Daily attempt cap per thread |
 | max_tokens_per_day | 50000 | New-request Token admission budget |
 | token_reservation | 20000 | Conservative reservation before an attempt |
+| api_token_reservation | 8000 | Reservation used by the direct API backend |
+| max_output_tokens | 512 | Direct API output cap, 64–4096 |
 | max_input_chars | 6000 | Conversation JSON limit, excluding framework instructions |
 | classification_timeout_seconds | 45 | Classifier turn timeout |
 | confidence_threshold | 0.8 | General title-change threshold |
@@ -48,7 +55,7 @@ python3 scripts/semantic_status.py status
 python3 scripts/semantic_status.py logs --limit 20
 ```
 
-Doctor checks the runtime and model list without a model turn. Status and logs do not create a database when the plugin has never run. Logs show outcome codes and error types, not raw exception text or transcripts.
+With the inherited Codex provider, doctor checks the runtime and model list without a model turn. With direct API, it checks local configuration and credential readiness without contacting the endpoint. Custom model availability is not verified by doctor. Status and logs do not create a database when the plugin has never run. Logs show outcome codes and error types, not raw exception text or transcripts.
 
 | Outcome | Meaning and action |
 | --- | --- |

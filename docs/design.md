@@ -21,7 +21,9 @@ flowchart LR
 
 Original-thread calls are limited to reads and `thread/name/set`. The adapter uses `thread/turns/list` with a legacy full-read fallback and never resumes the source conversation. The first user goal and recent three turns are combined with a previously accepted summary. Full tool output is omitted.
 
-Classification runs in an ephemeral thread with integrations, skills, tools and lifecycle Hooks disabled. Global AGENTS instructions can still be inherited by some runtimes; this is reflected in usage. Only a validated enum selects the title prefix. Model text never supplies the title itself.
+With the default Codex backend, classification runs in an ephemeral thread with integrations, skills, tools and lifecycle Hooks disabled. Selected provider/model overrides apply only to that thread, and runtime fallback is refused. Global AGENTS instructions can still be inherited by some runtimes; this is reflected in usage.
+
+The direct API backend uses `api_provider.py` to send the bounded classification prompt and payload through Chat Completions or Responses. A child process confines HTTP inference to an absolute parent deadline. No retries, redirects or tools are allowed, responses are bounded, and observed usage survives model JSON errors. `provider_config.py` validates definitions and resolves credential references; `provider_cli.py` provides atomic configuration and terminal setup. Both backends share the same worker and ledger, with separate per-attempt reservations. Only a validated enum selects the title prefix. Model text never supplies the title itself.
 
 ## Work coordination
 

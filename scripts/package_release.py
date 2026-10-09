@@ -23,7 +23,9 @@ def package(output_dir):
     for p in files:
         if p.is_symlink() or not p.exists() or not p.resolve().is_relative_to(ROOT):
             raise ValueError("invalid release path: " + str(p))
-        if p.name in ["auth.json", "config.json", "state.sqlite3", "handoff.md"] or p.suffix in [".log", ".sqlite3"]:
+        if (p.name in ["auth.json", "config.json", "state.sqlite3", "handoff.md", ".env"]
+                or p.suffix.lower() in [".log", ".sqlite3", ".key", ".pem"]
+                or "keys" in p.relative_to(ROOT).parts):
             raise ValueError("runtime data in release: " + str(p))
     output_dir.mkdir(parents=True, exist_ok=True)
     output = output_dir / ("codex-semantic-status-" + version + ".zip")

@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.2.0 — 2026-10-09
+
+- Add custom provider/model commands and a terminal setup wizard with hidden key input.
+- Support direct OpenAI-compatible Chat Completions and Responses, avoiding Codex framework input overhead.
+- Add environment-variable and private key-file references without storing inline credentials in configuration.
+- Select existing or classifier-only Codex Responses providers without changing source-thread or global settings.
+- Add API-specific reservations and output caps while preserving shared daily usage and pause records.
+- Bound inference with a child-process deadline; refuse redirects, retries, tools and model fallback.
+- Add local HTTP integration coverage for request limits, usage, malformed outputs, errors, redirects and timeout.
+
 ## 1.1.0 — 2026-10-08
 
 - Prepare the public GitHub distribution with English and Chinese documentation, MIT licensing and contributor guidance.
